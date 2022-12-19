@@ -161,7 +161,6 @@ class Node:
         print("Node " + self.nodeID + ": Order Manager thread exited")
         writer_thread.join()
         print("Node " + self.nodeID + ": Writer thread exited")
-        print(self.inboundREQs)
 
     def writeToFile(self):
 
