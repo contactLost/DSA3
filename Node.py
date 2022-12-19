@@ -18,7 +18,7 @@ class Node:
         successfulInit = False
         self.nodeID = ""
         self.logicalClock = LogicalClock.LogicalClock()
-        self.inboundMessages = []
+        self.inboundREQs = []
         self.inboundACKs = []
         self.orderedQueue = []
         self.deliveredMSGs = []
@@ -42,7 +42,7 @@ class Node:
             #When a request received
             if (not message == None) and message[0:4] == constants.REQ_WORD:
                 reqObj = self.get_req_obj(message[1])
-                self.inboundMessages.append(reqObj)
+                self.inboundREQs.append(reqObj)
                 print(message)
             
             #When a ack received
@@ -65,9 +65,9 @@ class Node:
         while not self.checkFinished():
             lock.acquire()
 
-            #Empty Inbound messages
-            while not self.inboundMessages.count == 0:
-                request = self.inboundMessages.pop()
+            #Empty Inbound Reqs
+            while not self.inboundREQs.count == 0:
+                request = self.inboundREQs.pop()
                 for i in range(len(self.orderedQueue)):
                     req_i = self.orderedQueue[i]
                     if req_i.time > request.time:
@@ -146,7 +146,7 @@ class Node:
         print("Node " + self.nodeID + ": Order Manager thread exited")
         writer_thread.join()
         print("Node " + self.nodeID + ": Writer thread exited")
-        print(self.inboundMessages)
+        print(self.inboundREQs)
 
     def writeToFile(self):
 
