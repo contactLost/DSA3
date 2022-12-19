@@ -41,7 +41,7 @@ class Node:
         while not self.checkFinished():
             # Listen to requests
             message = None
-            message = self.ci.recvFromAny(3)
+            message = self.ci.recvFromAny(2)
             lock.acquire()
             if not message == None:
                 print("Node " + str(self.nodeID) + ": received message: " + str(message[1]))
@@ -50,7 +50,6 @@ class Node:
                 reqObj = self.get_req_obj(message[1])
                 self.logicalClock.updateClock(int(reqObj.time))
                 self.inboundREQs.append(reqObj)
-                print(message)
             
             #When a ack received
             elif (not message == None) and (message[1][0:3] == constants.ACK_WORD):
@@ -62,6 +61,7 @@ class Node:
             lock.release()
 
     def sendACKs(self, request):
+        print("AAAAAAAAAAAAA")
         ack = constants.ACK_WORD + "," + str(self.logicalClock.getClock()) + "," + request.get_request_data()
         self.ci.sendToAll(ack)
         self.logicalClock.increaseClock()
@@ -79,14 +79,14 @@ class Node:
                 if constants.MAXT > random_t > constants.MINT:
                     is_end = False
 
-            print('random_t ' + str(random_t))
             time.sleep(random_t / 1000)
             self.ci.sendToAll(
                 str(constants.REQ_WORD) + ',' + str(self.nodeID) + ',' + str(self.logicalClock.clock) + ',' + str(self.req_no))
+            lock.acquire()
             self.logicalClock.increaseClock()
             self.req_no += 1
-
-            if self.req_no >= constants.NR:
+            lock.release()
+            if self.req_no > 5:
                 break
 
     def order_manager_thread(self):
@@ -107,8 +107,6 @@ class Node:
 
                 for i in range(len(self.orderedQueue)):
                     req_i = self.orderedQueue[i]
-                    print(req_i.time)
-                    print(request.time)
                     if req_i.time > request.time:
                         self.orderedQueue.insert(i, request)
                         # Send Ack
@@ -127,11 +125,11 @@ class Node:
                             # Send Ack
                             self.sendACKs(request)
                             break
-            
+
             #Empty Acks
             ind = 0
             while ind < len(self.inboundACKs):
-                #print("ind: " + str(ind) + " len: " + str(len(self.inboundACKs)))
+                # print("ind: " + str(ind) + " len: " + str(len(self.inboundACKs)))
                 ack = self.inboundACKs[ind]
                 for req in self.orderedQueue:
                     if req.ackRequest(ack):
@@ -139,7 +137,6 @@ class Node:
                         ind = ind - 1
                         break
                 ind = ind + 1
-            print("EXITED")
 
             #Check If Delivarable
             if len(self.orderedQueue) > 0 and self.orderedQueue[0].is_request_acked_by_everyone():
@@ -155,9 +152,11 @@ class Node:
 
     def writer_thread(self):
         while not self.checkFinished():
+            lock.acquire()
             if len(self.deliveredMSGs) > 0:
                 delMSG:Req.Req = self.deliveredMSGs.pop() 
                 self.writeToFile(delMSG.time,delMSG.reqNo)
+            lock.release()
 
     def run(self):
         self.ci.bind(self.nodeID)
@@ -191,7 +190,7 @@ class Node:
         ts = (str(time)+"" + str(self.nodeID))
         rt = datetime.datetime.now().timestamp()
 
-        writeToWrite = "pid=" + pid + ", ospid=" + ospid + ", reqid=" + reqid + ", ts=" + ts + ", rt=" + str(rt) + "\n"
+        writeToWrite = "pid=" + str(pid) + ", ospid=" + str(ospid) + ", reqid=" + str(reqid) + ", ts=" + str(ts) + ", rt=" + str(rt) + "\n"
 
         # open file
         filename = str(self.nodeID) + ".txt"
@@ -208,6 +207,6 @@ class Node:
         f.close()
 
     def checkFinished(self):
-        # if len(self.deliveredMSGs) == 0 and self.deliveredMSGAmount == constants.NR * constants.NP:
-        #     return True
+        if len(self.deliveredMSGs) == 0 and self.deliveredMSGAmount == constants.NR * constants.NP:
+            return True
         return False
