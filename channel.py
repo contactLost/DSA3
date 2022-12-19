@@ -136,10 +136,5 @@ class Channel():
 	# def startProgram(self):
 	# 	self.channel.lpush(constants.FINISHED_KEY, str(False))
 	
-	# def checkFinished(self):
-	# 	while True:
-	# 		try:
-	# 			finished = (self.channel.lrange(constants.FINISHED_KEY, 0, 0)[0]).decode("ascii")
-	# 			return str(finished)
-	# 		except:
-	# 			None
+	def checkFinished(self):
+		return False
