@@ -95,8 +95,10 @@ class Node:
             time.sleep(1)
             lock.acquire()
             print("Order manager")
-            print("\nNode " + str(self.nodeID) + ":\nINBOUND REQS: " + str(self.inboundREQs) + "\nDELIVERED MSGS: " + str(self.deliveredMSGs) + "\nINBOUND ACKS: " + str(self.inboundACKs))
             self.printOrderedQueue()
+            self.printInboundREQS()
+            self.printInboundACKS()
+            self.printDeliveredMSG()
             # Empty Inbound Reqs
             if not len(self.inboundREQs) == 0:
                 print("Node " + str(self.nodeID) + " inbound req size: " + str(len(self.inboundREQs)))
@@ -219,4 +221,20 @@ class Node:
     def printOrderedQueue(self):
         print("Node " + str(self.nodeID) + " Ordered Que -> ")
         for req in self.orderedQueue:
+            print(req.__str__() + " , ")
+
+    def printInboundACKS(self):
+        print("Node " + str(self.nodeID) + " InboundACK -> ")
+        for req in self.inboundACKs:
+            print(req + " , ")
+    
+    def printInboundREQS(self):
+        print("Node " + str(self.nodeID) + " InboundREQ -> ")
+        for req in self.inboundREQs:
+            print(req.__str__() + " , ")
+    
+    def printDeliveredMSG(self):
+        print("Node " + str(self.nodeID) + " Delivered Msg -> ")
+        for req in self.deliveredMSGs:
             print(req.__str__() + ", ")
+
