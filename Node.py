@@ -2,15 +2,17 @@ import os
 import channel
 import random
 import time
+import constants
 import threading
-
 
 from datetime import datetime
 
 lock = threading.Lock()
+
+
 class Node:
     def __init__(self):
-        self.ci=channel.Channel()
+        self.ci = channel.Channel()
         successfulInit = False
         self.nodeID = ""
         self.inboundMessages = []
@@ -18,20 +20,19 @@ class Node:
 
         while not successfulInit:
             try:
-                self.nodeID=self.ci.join("ring1")
+                self.nodeID = self.ci.join("ring1")
                 successfulInit = True
             except(AssertionError):
                 None
-        
 
     def listenRequests(self):
         while not self.checkFinished():
             lock.acquire()
-            #Listen to requests
+            # Listen to requests
             message = None
             message = self.ci.recvFromAny(3)
 
-            #When a request received
+            # When a request received
             self.inboundMessages.append(message)
             print(message)
 
@@ -39,6 +40,7 @@ class Node:
 
     def broadcast_thread(self):
         while not self.checkFinished():
+            self.ci.sendToAll()
             None
 
     def order_manager_thread(self):
@@ -47,11 +49,15 @@ class Node:
 
     def writer_thread(self):
         while not self.checkFinished():
-            None
 
+            random_t = -1
 
-
-
+            while self.req_count < constants.NP:
+                while not (constants.MINT < random_t < constants.MAXT):
+                    current_time = datetime.datetime.now().timestamp()
+                    lam = 1 / constants.AVGT
+                    random.seed(current_time + self.PID)
+                    random_t = int(random.expovariate(lam))
     def run(self):
         self.ci.bind(self.nodeID)
 
@@ -70,7 +76,6 @@ class Node:
         self.writeToFile()
         self.ci.sendToAll("Hello From " + self.nodeID)
 
-
         listen_thread.join()
         print("Node " + self.nodeID + ": Listen thread exited")
         broadcast_thread.join()
@@ -80,31 +85,30 @@ class Node:
         writer_thread.join()
         print("Node " + self.nodeID + ": Writer thread exited")
         print(self.inboundMessages)
-        
 
     def writeToFile(self):
 
         pid = str(self.nodeID)
-        ospid = str(os.getpid()) #If write to file is run on a thread this line might cause some problems
-        reqid = "001"       #To be figured out later TODO
-        ts = ("0001:"+str(self.nodeID))
-        rt = "no idea"
+        ospid = str(os.getpid())  # If write to file is run on a thread this line might cause some problems
+        reqid = "001"  # To be figured out later TODO
+        ts = ("0001:" + str(self.nodeID))
+        rt = datetime.datetime.now().timestamp()
 
-        writeToWrite = "pid="+pid+", ospid="+ospid+", reqid="+reqid+", ts="+ ts+ ", rt="+rt + "\n"
+        writeToWrite = "pid=" + pid + ", ospid=" + ospid + ", reqid=" + reqid + ", ts=" + ts + ", rt=" + rt + "\n"
 
-        #open file
-        filename = str(self.nodeID) +".txt"
+        # open file
+        filename = str(self.nodeID) + ".txt"
 
         if os.path.exists(filename):
-            append_write = 'a' # append if already exists
+            append_write = 'a'  # append if already exists
         else:
-            append_write = 'w' # make a new file if not
+            append_write = 'w'  # make a new file if not
         print("select ", append_write)
         f = open(filename, append_write, )
 
         f.write(writeToWrite)
         print(writeToWrite)
         f.close()
-        
+
     def checkFinished(self):
-	    return self.allMessagesProcessed
+        return self.allMessagesProcessed
