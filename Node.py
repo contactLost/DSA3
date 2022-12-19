@@ -35,7 +35,7 @@ class Node:
 
 
     def get_ack_time(self, ackStr):
-        return ackStr.split(",")[1]
+        return int(ackStr.split(",")[1])
 
     def listenRequests(self):
         while not self.checkFinished():
@@ -47,15 +47,15 @@ class Node:
             if not message == None:
                 print("Node " + str(self.nodeID) + ": received message: " + str(message[1]))
             #When a request received
-            if (not message == None) and message[0:3] == constants.REQ_WORD:
+            if (not message == None) and message[1][0:3] == constants.REQ_WORD:
                 reqObj = self.get_req_obj(message[1])
-                self.logicalClock.updateClock(reqObj.time)
+                self.logicalClock.updateClock(int(reqObj.time))
                 self.inboundREQs.append(reqObj)
                 print(message)
             
             #When a ack received
-            elif (not message == None) and message[0:3] == constants.ACK_WORD:
-                print("Node " + str(self.nodeID) + ": received ack: " + str(message))
+            elif (not message == None) and message[1][0:3] == constants.ACK_WORD:
+                print("Node " + str(self.nodeID) + ": received ack: " + str(message[1]))
                 ack = message[1]
                 if not ack.split(",")[2] == self.nodeID:
                     self.logicalClock.updateClock(self.get_ack_time(ack))
@@ -84,6 +84,7 @@ class Node:
             time.sleep(random_t / 1000)
             self.ci.sendToAll(
                 str(constants.REQ_WORD) + ',' + str(self.nodeID) + ',' + str(self.logicalClock.clock) + ',' + str(self.req_no))
+            self.logicalClock.increaseClock()
             self.req_no += 1
 
             if self.req_no >= constants.NR:
@@ -92,8 +93,9 @@ class Node:
     def order_manager_thread(self):
         while not self.checkFinished():
             lock.acquire()
-
             # Empty Inbound Reqs
+            print(len(self.inboundREQs))
+
             while not len(self.inboundREQs) == 0:
                 request = self.inboundREQs.pop()
 
@@ -129,6 +131,7 @@ class Node:
             #Empty Acks
             i = 0
             while i < len(self.inboundACKs):
+                print("asdas")
                 ack = self.inboundACKs[i]
                 for req in self.orderedQueue:
                     if req.ackRequest(ack):
@@ -203,6 +206,6 @@ class Node:
         f.close()
 
     def checkFinished(self):
-        if len(self.deliveredMSGs) == 0 and self.deliveredMSGAmount == constants.NR * constants.NP:
-            return True
+        # if len(self.deliveredMSGs) == 0 and self.deliveredMSGAmount == constants.NR * constants.NP:
+        #     return True
         return False
