@@ -96,6 +96,13 @@ class Node:
             # Empty Inbound Reqs
             while not len(self.inboundREQs) == 0:
                 request = self.inboundREQs.pop()
+
+                if len(self.orderedQueue) == 0:
+                    self.orderedQueue.append(request)
+                    # Send Ack
+                    self.sendACKs(request)
+                    break
+
                 for i in range(len(self.orderedQueue)):
                     req_i = self.orderedQueue[i]
                     print(req_i.time)
@@ -103,14 +110,12 @@ class Node:
                     if req_i.time > request.time:
                         self.orderedQueue.insert(i, request)
                         # Send Ack
-                        print("ACK")
                         self.sendACKs(request)
                         break
                     elif req_i.time == request.time:
                         if int(req_i.sender) > int(request.sender):
                             self.orderedQueue.insert(i, request)
                             # Send Ack
-                            print("ACK")
                             self.sendACKs(request)
                             break
 
@@ -118,7 +123,6 @@ class Node:
                         elif (i + 1 == (len(self.orderedQueue))) or (not self.orderedQueue[i + 1].time == request.time):
                             self.orderedQueue.insert(i + 1, request)
                             # Send Ack
-                            print("ACK")
                             self.sendACKs(request)
                             break
                     
