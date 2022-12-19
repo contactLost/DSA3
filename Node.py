@@ -24,7 +24,7 @@ class Node:
         self.deliveredMSGs = []
         self.allMessagesProcessed = False
         self.deliveredMSGAmount = 0
-        self.req_count = 1
+        self.req_no = 1
 
         while not successfulInit:
             try:
@@ -142,7 +142,9 @@ class Node:
 
     def writer_thread(self):
         while not self.checkFinished():
-            None
+            if len(self.deliveredMSGs) > 0:
+                delMSG:Req.Req = self.deliveredMSGs.pop() 
+                self.writeToFile(delMSG.time,delMSG.reqNo)
 
     def run(self):
         self.ci.bind(self.nodeID)
@@ -168,12 +170,12 @@ class Node:
         writer_thread.join()
         print("Node " + self.nodeID + ": Writer thread exited")
 
-    def writeToFile(self):
+    def writeToFile(self,time,reqNo):
 
         pid = str(self.nodeID)
         ospid = str(os.getpid())  # If write to file is run on a thread this line might cause some problems
-        reqid = "001"  # To be figured out later TODO
-        ts = ("0001:" + str(self.nodeID))
+        reqid = reqNo  # To be figured out later TODO
+        ts = (str(time)+"" + str(self.nodeID))
         rt = datetime.datetime.now().timestamp()
 
         writeToWrite = "pid=" + pid + ", ospid=" + ospid + ", reqid=" + reqid + ", ts=" + ts + ", rt=" + str(rt) + "\n"
