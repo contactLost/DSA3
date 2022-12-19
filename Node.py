@@ -24,6 +24,7 @@ class Node:
         self.deliveredMSGs = []
         self.allMessagesProcessed = False
         self.deliveredMSGAmount = 0
+        self.req_count = 0
 
         while not successfulInit:
             try:
@@ -57,40 +58,51 @@ class Node:
             lock.release()
 
     def broadcast_thread(self):
-        while not self.checkFinished():
-            self.ci.sendToAll()
-            None
+        while True:
+            random_t = -1
+            current_time = datetime.datetime.now().timestamp()
+            random.seed(current_time + float(self.nodeID))
+            is_end = True
+            print('brad cast brom')
+            while is_end:
+                print('here')
+                lam = 1 / constants.AVGT
 
-    def sendACKs(self, request):
-        ack = constants.ACK_WORD + "," + str(self.logicalClock.getClock()) + "," + request.get_request_data()
-        self.ci.sendToAll(ack)
-        self.logicalClock.increaseClock()
+                random_t = int(random.expovariate(lam))
+                print(constants.MAXT > random_t > constants.MINT)
+                if constants.MAXT > random_t > constants.MINT:
+                    is_end = False
+                    print('end')
+
+            print('random_t ' + str(random_t))
+            time.sleep(random_t / 1000)
+            self.ci.sendToAll('Broaddd cast brom')
 
     def order_manager_thread(self):
         while not self.checkFinished():
             lock.acquire()
 
-            #Empty Inbound Reqs
+            # Empty Inbound Reqs
             while not self.inboundREQs.count == 0:
                 request = self.inboundREQs.pop()
                 for i in range(len(self.orderedQueue)):
                     req_i = self.orderedQueue[i]
                     if req_i.time > request.time:
                         self.orderedQueue.insert(i, request)
-                        #Send Ack
+                        # Send Ack
                         self.sendACKs(request)
                         break
                     elif req_i.time == request.time:
                         if int(req_i.sender) > int(request.sender):
                             self.orderedQueue.insert(i, request)
-                            #Send Ack
+                            # Send Ack
                             self.sendACKs(request)
                             break
-                        
+
                         #Last Request
-                        elif (i + 1 == (self.orderedQueue.count)) or (not self.orderedQueue[i+1].time == request.time):
+                        elif (i + 1 == (self.orderedQueue.count)) or (not self.orderedQueue[i + 1].time == request.time):
                             self.orderedQueue.insert(i + 1, request)
-                            #Send Ack
+                            # Send Ack
                             self.sendACKs(request)
                             break
                     
@@ -109,7 +121,6 @@ class Node:
                 msg = self.orderedQueue.pop()
                 self.deliveredMSGs.append(msg)
                 self.deliveredMSGAmount = self.deliveredMSGAmount + 1
-
             lock.release()
 
     def get_req_obj(self, reqString) -> Req.Req:
@@ -119,15 +130,7 @@ class Node:
 
     def writer_thread(self):
         while not self.checkFinished():
-
-            random_t = -1
-
-            while self.req_count < constants.NP:
-                while not (constants.MINT < random_t < constants.MAXT):
-                    current_time = datetime.datetime.now().timestamp()
-                    lam = 1 / constants.AVGT
-                    random.seed(current_time + self.PID)
-                    random_t = int(random.expovariate(lam))
+            None
 
     def run(self):
         self.ci.bind(self.nodeID)
@@ -165,7 +168,7 @@ class Node:
         ts = ("0001:" + str(self.nodeID))
         rt = datetime.datetime.now().timestamp()
 
-        writeToWrite = "pid=" + pid + ", ospid=" + ospid + ", reqid=" + reqid + ", ts=" + ts + ", rt=" + rt + "\n"
+        writeToWrite = "pid=" + pid + ", ospid=" + ospid + ", reqid=" + reqid + ", ts=" + ts + ", rt=" + str(rt) + "\n"
 
         # open file
         filename = str(self.nodeID) + ".txt"
