@@ -107,6 +107,7 @@ class Channel():
 	def sendToAll(self, message):
 		caller = self.osmembers[os.getpid()]
 		assert self.channel.sismember('members', str(caller)), ''
+		self.channel.rpush("log", "BROADCAST:"+str(message) )
 		for i in self.channel.smembers('members'):
 
 			#If you dont want to send message to itself, uncomment the line below

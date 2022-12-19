@@ -69,22 +69,17 @@ class Node:
             current_time = datetime.datetime.now().timestamp()
             random.seed(current_time + float(self.nodeID))
             is_end = True
-            print('brad cast brom')
             while is_end:
-                print('here')
                 lam = 1 / constants.AVGT
 
                 random_t = int(random.expovariate(lam))
-                print(constants.MAXT > random_t > constants.MINT)
                 if constants.MAXT > random_t > constants.MINT:
                     is_end = False
-                    print('end')
 
             print('random_t ' + str(random_t))
             time.sleep(random_t / 1000)
-            current_time = datetime.datetime.now().timestamp()
             self.ci.sendToAll(
-                str(constants.REQ_WORD) + ',' + str(self.nodeID) + ',' + str(current_time) + ',' + str(self.req_no))
+                str(constants.REQ_WORD) + ',' + str(self.nodeID) + ',' + str(self.logicalClock.clock) + ',' + str(self.req_no))
             self.req_no += 1
 
             if self.req_no >= constants.NR:
