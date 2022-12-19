@@ -14,6 +14,7 @@ class Node:
         successfulInit = False
         self.nodeID = ""
         self.inboundMessages = []
+        self.allMessagesProcessed = False
 
         while not successfulInit:
             try:
@@ -24,7 +25,7 @@ class Node:
         
 
     def listenRequests(self):
-        while not self.ci.checkFinished():
+        while not self.checkFinished():
             lock.acquire()
             #Listen to requests
             message = None
@@ -37,15 +38,15 @@ class Node:
             lock.release()
 
     def broadcast_thread(self):
-        while not self.ci.checkFinished():
+        while not self.checkFinished():
             None
 
     def order_manager_thread(self):
-        while not self.ci.checkFinished():
+        while not self.checkFinished():
             None
 
     def writer_thread(self):
-        while not self.ci.checkFinished():
+        while not self.checkFinished():
             None
 
 
@@ -104,3 +105,6 @@ class Node:
         f.write(writeToWrite)
         print(writeToWrite)
         f.close()
+        
+    def checkFinished(self):
+	    return self.allMessagesProcessed

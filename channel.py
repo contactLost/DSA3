@@ -135,6 +135,3 @@ class Channel():
 
 	# def startProgram(self):
 	# 	self.channel.lpush(constants.FINISHED_KEY, str(False))
-	
-	def checkFinished(self):
-		return False
