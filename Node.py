@@ -45,7 +45,7 @@ class Node:
             message = self.ci.recvFromAny(3)
             
             if not message == None:
-                print("Node " + str(self.nodeID) + ": received message: " + str(message))
+                print("Node " + str(self.nodeID) + ": received message: " + str(message[1]))
             #When a request received
             if (not message == None) and message[0:3] == constants.REQ_WORD:
                 reqObj = self.get_req_obj(message[1])
@@ -98,15 +98,19 @@ class Node:
                 request = self.inboundREQs.pop()
                 for i in range(len(self.orderedQueue)):
                     req_i = self.orderedQueue[i]
+                    print(req_i.time)
+                    print(request.time)
                     if req_i.time > request.time:
                         self.orderedQueue.insert(i, request)
                         # Send Ack
+                        print("ACK")
                         self.sendACKs(request)
                         break
                     elif req_i.time == request.time:
                         if int(req_i.sender) > int(request.sender):
                             self.orderedQueue.insert(i, request)
                             # Send Ack
+                            print("ACK")
                             self.sendACKs(request)
                             break
 
@@ -114,6 +118,7 @@ class Node:
                         elif (i + 1 == (len(self.orderedQueue))) or (not self.orderedQueue[i + 1].time == request.time):
                             self.orderedQueue.insert(i + 1, request)
                             # Send Ack
+                            print("ACK")
                             self.sendACKs(request)
                             break
                     
@@ -128,7 +133,7 @@ class Node:
                 i = i + 1
 
             #Check If Delivarable
-            if self.orderedQueue[0].is_request_acked_by_everyone():
+            if len(self.orderedQueue) > 0 and self.orderedQueue[0].is_request_acked_by_everyone():
                 msg = self.orderedQueue.pop()
                 self.deliveredMSGs.append(msg)
                 self.deliveredMSGAmount = self.deliveredMSGAmount + 1
