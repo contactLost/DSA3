@@ -18,7 +18,7 @@ class Req:
         return False
 
     def is_request_acked_by_everyone(self):
-        if constants.NP - 1 == self.ackCounter:
+        if constants.NP == self.ackCounter:
             return True
         return False
 

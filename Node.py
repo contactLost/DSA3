@@ -25,6 +25,7 @@ class Node:
         self.allMessagesProcessed = False
         self.deliveredMSGAmount = 0
         self.req_no = 1
+        self.received = 0
 
         while not successfulInit:
             try:
@@ -41,7 +42,6 @@ class Node:
         while not self.checkFinished():
             # Listen to requests
             message = None
-            print("listenRequests")
             message = self.ci.recvFromAny(2)
             lock.acquire()
             if not message == None:
@@ -56,9 +56,8 @@ class Node:
             elif (not message == None) and (message[1][0:3] == constants.ACK_WORD):
                 print("Node " + str(self.nodeID) + ": received ack: " + str(message[1]))
                 ack = message[1]
-                if not (ack.split(",")[2] == self.nodeID):
-                    self.logicalClock.updateClock(self.get_ack_time(ack))
-                    self.inboundACKs.append(ack)
+                self.logicalClock.updateClock(self.get_ack_time(ack))
+                self.inboundACKs.append(ack)
             lock.release()
 
     def sendACKs(self, request):
@@ -68,7 +67,6 @@ class Node:
 
     def broadcast_thread(self):
         while not self.checkFinished():
-            print("broadcast_thread")
             random_t = -1
             current_time = datetime.datetime.now().timestamp()
             random.seed(current_time + float(self.nodeID))
@@ -89,12 +87,12 @@ class Node:
             lock.release()
             if self.req_no > 5:
                 break
+        print("Broadcast exited")
 
     def order_manager_thread(self):
         while not self.checkFinished():
             time.sleep(1)
             lock.acquire()
-            print("Order manager")
             self.printOrderedQueue()
             self.printInboundREQS()
             self.printInboundACKS()
@@ -104,33 +102,33 @@ class Node:
                 print("Node " + str(self.nodeID) + " inbound req size: " + str(len(self.inboundREQs)))
 
             while not len(self.inboundREQs) == 0:
-                request = self.inboundREQs.pop()
+                request = self.inboundREQs.pop(0)
                 if len(self.orderedQueue) == 0:
                     self.orderedQueue.append(request)
                     # Send Ack
                     self.sendACKs(request)
-                    break
-
-                for i in range(len(self.orderedQueue)):
-                    req_i = self.orderedQueue[i]
-                    if req_i.time > request.time:
-                        self.orderedQueue.insert(i, request)
-                        # Send Ack
-                        self.sendACKs(request)
-                        break
-                    elif req_i.time == request.time:
-                        if int(req_i.sender) > int(request.sender):
+                
+                else:
+                    for i in range(len(self.orderedQueue)):
+                        req_i = self.orderedQueue[i]
+                        if req_i.time > request.time:
                             self.orderedQueue.insert(i, request)
                             # Send Ack
                             self.sendACKs(request)
                             break
+                        elif req_i.time == request.time:
+                            if int(req_i.sender) > int(request.sender):
+                                self.orderedQueue.insert(i, request)
+                                # Send Ack
+                                self.sendACKs(request)
+                                break
 
-                        #Last Request
-                        elif (i + 1 == (len(self.orderedQueue))) or (not self.orderedQueue[i + 1].time == request.time):
-                            self.orderedQueue.insert(i + 1, request)
-                            # Send Ack
-                            self.sendACKs(request)
-                            break
+                            #Last Request
+                            elif (i + 1 == (len(self.orderedQueue))) or (not self.orderedQueue[i + 1].time == request.time):
+                                self.orderedQueue.insert(i + 1, request)
+                                # Send Ack
+                                self.sendACKs(request)
+                                break
 
             #Empty Acks
             ind = 0
@@ -146,7 +144,7 @@ class Node:
 
             #Check If Delivarable
             if len(self.orderedQueue) > 0 and self.orderedQueue[0].is_request_acked_by_everyone():
-                msg = self.orderedQueue.pop()
+                msg = self.orderedQueue.pop(0)
                 self.deliveredMSGs.append(msg)
                 self.deliveredMSGAmount = self.deliveredMSGAmount + 1
             lock.release()
@@ -160,7 +158,7 @@ class Node:
         while not self.checkFinished():
             lock.acquire()
             if len(self.deliveredMSGs) > 0:
-                delMSG:Req.Req = self.deliveredMSGs.pop() 
+                delMSG:Req.Req = self.deliveredMSGs.pop(0) 
                 self.writeToFile(delMSG.time,delMSG.reqNo)
             lock.release()
 
@@ -205,7 +203,6 @@ class Node:
             append_write = 'a'  # append if already exists
         else:
             append_write = 'w'  # make a new file if not
-        print("select ", append_write)
         f = open(filename, append_write, )
 
         f.write(writeToWrite)
@@ -219,22 +216,26 @@ class Node:
 
 
     def printOrderedQueue(self):
-        print("Node " + str(self.nodeID) + " Ordered Que -> ")
-        for req in self.orderedQueue:
-            print(req.__str__() + " , ")
+        if not len(self.orderedQueue) == 0:
+            print("Node " + str(self.nodeID) + " Ordered Que -> ")
+            for req in self.orderedQueue:
+                print(req.__str__() + " , ")
 
     def printInboundACKS(self):
-        print("Node " + str(self.nodeID) + " InboundACK -> ")
-        for req in self.inboundACKs:
-            print(req + " , ")
+        if not len(self.inboundACKs) == 0:
+            print("Node " + str(self.nodeID) + " InboundACK -> ")
+            for req in self.inboundACKs:
+                print(req + " , ")
     
     def printInboundREQS(self):
-        print("Node " + str(self.nodeID) + " InboundREQ -> ")
-        for req in self.inboundREQs:
-            print(req.__str__() + " , ")
+        if not len(self.inboundREQs) == 0:
+            print("Node " + str(self.nodeID) + " InboundREQ -> ")
+            for req in self.inboundREQs:
+                print(req.__str__() + " , ")
     
     def printDeliveredMSG(self):
-        print("Node " + str(self.nodeID) + " Delivered Msg -> ")
-        for req in self.deliveredMSGs:
-            print(req.__str__() + ", ")
+        if not len(self.deliveredMSGs) == 0:
+            print("Node " + str(self.nodeID) + " Delivered Msg -> ")
+            for req in self.deliveredMSGs:
+                print(req.__str__() + ", ")
 
