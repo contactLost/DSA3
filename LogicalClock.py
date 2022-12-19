@@ -7,7 +7,11 @@ class LogicalClock:
         return self.clock
 
     def updateClock(self,newClock):
-        self.clock = newClock
+        if newClock > self.clock:
+            self.clock = newClock + 1
+        else:
+            self.clock = self.clock + 1
+
         return self.clock
 
     def getClock(self):
