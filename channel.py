@@ -69,7 +69,7 @@ class Channel():
 	def bind(self, pid):
 		ospid = os.getpid()
 		self.osmembers[ospid] = str(pid)
-		print ("Process "+str(ospid)+" ["+pid+"] online")
+		#print ("Process "+str(ospid)+" ["+pid+"] online")
 		#print (self.osmembers)
 
 	def subgroup(self, subgroup):
