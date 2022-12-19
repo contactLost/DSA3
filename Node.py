@@ -24,6 +24,7 @@ class Node:
         
 
     def listenRequests(self):
+        while not self.ci.checkFinished():
             lock.acquire()
             #Listen to requests
             message = None
@@ -35,6 +36,19 @@ class Node:
 
             lock.release()
 
+    def broadcast_thread(self):
+        while not self.ci.checkFinished():
+            None
+
+    def order_manager_thread(self):
+        while not self.ci.checkFinished():
+            None
+
+    def writer_thread(self):
+        while not self.ci.checkFinished():
+            None
+
+
 
 
     def run(self):
@@ -43,14 +57,28 @@ class Node:
         listen_thread = threading.Thread(target=self.listenRequests)
         listen_thread.start()
 
+        broadcast_thread = threading.Thread(target=self.broadcast_thread)
+        broadcast_thread.start()
+
+        order_manager_thread = threading.Thread(target=self.order_manager_thread)
+        order_manager_thread.start()
+
+        writer_thread = threading.Thread(target=self.writer_thread)
+        writer_thread.start()
+
         self.writeToFile()
         self.ci.sendToAll("Hello From " + self.nodeID)
 
 
         listen_thread.join()
+        print("Node " + self.nodeID + ": Listen thread exited")
+        broadcast_thread.join()
+        print("Node " + self.nodeID + ": Broadcast thread exited")
+        order_manager_thread.join()
+        print("Node " + self.nodeID + ": Order Manager thread exited")
+        writer_thread.join()
+        print("Node " + self.nodeID + ": Writer thread exited")
         print(self.inboundMessages)
-        #print("Node " + self.nodeID + ": Thread listen_thread exited")
-        #print("Node " + self.nodeID + ": EXITED")
         
 
     def writeToFile(self):
