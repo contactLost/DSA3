@@ -85,7 +85,7 @@ class Node:
             current_time = datetime.datetime.now().timestamp()
             self.ci.sendToAll(
                 str(constants.REQ_WORD) + ',' + str(self.nodeID) + ',' + str(current_time) + ',' + str(self.req_no))
-            self.req_no += self.req_no
+            self.req_no += 1
 
             if self.req_no >= constants.NR:
                 break
