@@ -23,6 +23,7 @@ class Node:
         self.orderedQueue = []
         self.deliveredMSGs = []
         self.allMessagesProcessed = False
+        self.deliveredMSGAmount = 0
 
         while not successfulInit:
             try:
@@ -55,9 +56,15 @@ class Node:
             self.ci.sendToAll()
             None
 
+    def sendACKs(self, request):
+        ack = constants.ACK_WORD + "," + str(self.logicalClock.getClock()) + "," + request.get_request_data()
+        self.ci.sendToAll(ack)
+        self.logicalClock.increaseClock()
+
     def order_manager_thread(self):
         while not self.checkFinished():
             lock.acquire()
+
             #Empty Inbound messages
             while not self.inboundMessages.count == 0:
                 request = self.inboundMessages.pop()
@@ -66,23 +73,33 @@ class Node:
                     if req_i.time > request.time:
                         self.orderedQueue.insert(i, request)
                         #Send Ack
+                        self.sendACKs(request)
                         break
                     elif req_i.time == request.time:
                         if int(req_i.sender) > int(request.sender):
                             self.orderedQueue.insert(i, request)
                             #Send Ack
+                            self.sendACKs(request)
                             break
                         
-                        if (i + 1 == (self.orderedQueue.count)) or (not self.orderedQueue[i+1].time == request.time):
-                            self.orderedQueue.insert(i, request)
+                        #Last Request
+                        elif (i + 1 == (self.orderedQueue.count)) or (not self.orderedQueue[i+1].time == request.time):
+                            self.orderedQueue.insert(i + 1, request)
                             #Send Ack
+                            self.sendACKs(request)
                             break
                     
             #Empty Acks
-
+            while not self.inboundACKs.count == 0:
+                ack = self.inboundACKs.pop()
+                for req in self.orderedQueue:
+                    req.ackRequest(ack)
 
             #Check If Delivarable
-
+            if self.orderedQueue[0].is_request_acked_by_everyone():
+                msg = self.orderedQueue.pop()
+                self.deliveredMSGs.append(msg)
+                self.deliveredMSGAmount = self.deliveredMSGAmount + 1
 
             lock.release()
 
@@ -102,7 +119,7 @@ class Node:
                     lam = 1 / constants.AVGT
                     random.seed(current_time + self.PID)
                     random_t = int(random.expovariate(lam))
-                    
+
     def run(self):
         self.ci.bind(self.nodeID)
 
@@ -156,4 +173,6 @@ class Node:
         f.close()
 
     def checkFinished(self):
-        return self.allMessagesProcessed
+        if self.deliveredMSGs.count == 0 and self.deliveredMSGAmount == constants.NR * constants.NP:
+            return True
+        return False
