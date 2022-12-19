@@ -95,7 +95,7 @@ class Node:
             lock.acquire()
 
             # Empty Inbound Reqs
-            while not self.inboundREQs.count == 0:
+            while not len(self.inboundREQs) == 0:
                 request = self.inboundREQs.pop()
                 for i in range(len(self.orderedQueue)):
                     req_i = self.orderedQueue[i]
@@ -112,7 +112,7 @@ class Node:
                             break
 
                         #Last Request
-                        elif (i + 1 == (self.orderedQueue.count)) or (not self.orderedQueue[i + 1].time == request.time):
+                        elif (i + 1 == (len(self.orderedQueue))) or (not self.orderedQueue[i + 1].time == request.time):
                             self.orderedQueue.insert(i + 1, request)
                             # Send Ack
                             self.sendACKs(request)
@@ -193,6 +193,6 @@ class Node:
         f.close()
 
     def checkFinished(self):
-        if self.deliveredMSGs.count == 0 and self.deliveredMSGAmount == constants.NR * constants.NP:
+        if len(self.deliveredMSGs) == 0 and self.deliveredMSGAmount == constants.NR * constants.NP:
             return True
         return False
