@@ -32,6 +32,10 @@ class Node:
             except(AssertionError):
                 None
 
+
+    def get_ack_time(self, ackStr):
+        return ackStr.split(",")[1]
+
     def listenRequests(self):
         while not self.checkFinished():
             lock.acquire()
@@ -40,13 +44,14 @@ class Node:
             message = self.ci.recvFromAny(3)
 
             #When a request received
-            if (not message == None) and message[0:4] == constants.REQ_WORD:
+            if (not message == None) and message[0:3] == constants.REQ_WORD:
                 reqObj = self.get_req_obj(message[1])
+                self.logicalClock.updateClock(reqObj.time)
                 self.inboundREQs.append(reqObj)
                 print(message)
             
             #When a ack received
-            elif (not message == None) and message[0:4] == constants.ACK_WORD:
+            elif (not message == None) and message[0:3] == constants.ACK_WORD:
                 None
 
             lock.release()
@@ -90,10 +95,14 @@ class Node:
                             break
                     
             #Empty Acks
-            while not self.inboundACKs.count == 0:
-                ack = self.inboundACKs.pop()
+            i = 0
+            while i < len(self.inboundACKs):
+                ack = self.inboundACKs[i]
                 for req in self.orderedQueue:
-                    req.ackRequest(ack)
+                    if req.ackRequest(ack):
+                        self.inboundACKs.remove(i)
+                        i = i - 1
+                i = i + 1
 
             #Check If Delivarable
             if self.orderedQueue[0].is_request_acked_by_everyone():
@@ -103,7 +112,7 @@ class Node:
 
             lock.release()
 
-    def get_req_obj(self, reqString):
+    def get_req_obj(self, reqString) -> Req.Req:
         data = reqString.split(",")
         reqObj = Req.Req(data[1], int(data[2]), int(data[3]), reqString)
         return reqObj
