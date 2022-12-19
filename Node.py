@@ -41,6 +41,7 @@ class Node:
         while not self.checkFinished():
             # Listen to requests
             message = None
+            print("listenRequests")
             message = self.ci.recvFromAny(2)
             lock.acquire()
             if not message == None:
@@ -61,13 +62,13 @@ class Node:
             lock.release()
 
     def sendACKs(self, request):
-        print("AAAAAAAAAAAAA")
         ack = constants.ACK_WORD + "," + str(self.logicalClock.getClock()) + "," + request.get_request_data()
         self.ci.sendToAll(ack)
         self.logicalClock.increaseClock()
 
     def broadcast_thread(self):
         while not self.checkFinished():
+            print("broadcast_thread")
             random_t = -1
             current_time = datetime.datetime.now().timestamp()
             random.seed(current_time + float(self.nodeID))
@@ -91,14 +92,17 @@ class Node:
 
     def order_manager_thread(self):
         while not self.checkFinished():
+            time.sleep(1)
             lock.acquire()
+            print("Order manager")
+            print("\nNode " + str(self.nodeID) + ":\nINBOUND REQS: " + str(self.inboundREQs) + "\nDELIVERED MSGS: " + str(self.deliveredMSGs) + "\nINBOUND ACKS: " + str(self.inboundACKs))
+            self.printOrderedQueue()
             # Empty Inbound Reqs
             if not len(self.inboundREQs) == 0:
                 print("Node " + str(self.nodeID) + " inbound req size: " + str(len(self.inboundREQs)))
 
             while not len(self.inboundREQs) == 0:
                 request = self.inboundREQs.pop()
-
                 if len(self.orderedQueue) == 0:
                     self.orderedQueue.append(request)
                     # Send Ack
@@ -210,3 +214,9 @@ class Node:
         if len(self.deliveredMSGs) == 0 and self.deliveredMSGAmount == constants.NR * constants.NP:
             return True
         return False
+
+
+    def printOrderedQueue(self):
+        print("Node " + str(self.nodeID) + " Ordered Que -> ")
+        for req in self.orderedQueue:
+            print(req.__str__() + ", ")
