@@ -7,7 +7,7 @@ import threading
 import Req
 import LogicalClock
 
-from datetime import datetime
+import datetime
 
 lock = threading.Lock()
 
@@ -53,9 +53,15 @@ class Node:
             
             #When a ack received
             elif (not message == None) and message[0:3] == constants.ACK_WORD:
-                None
-
+                ack = message[1]
+                self.logicalClock.updateClock(self.get_ack_time(ack))
+                self.inboundACKs.append(ack)
             lock.release()
+
+    def sendACKs(self, request):
+        ack = constants.ACK_WORD + "," + str(self.logicalClock.getClock()) + "," + request.get_request_data()
+        self.ci.sendToAll(ack)
+        self.logicalClock.increaseClock()
 
     def broadcast_thread(self):
         while True:
