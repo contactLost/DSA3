@@ -1,16 +1,17 @@
 import constants
 
 class Req:
-    def __init__(self, sender, time, reqNo, reqString):
+    def __init__(self, sender, time, reqNo, reqString, realTime):
         self.sender = sender
         self.time = time
         self.reqNo = reqNo
+        self.realTime = realTime
         self.reqString = reqString
         self.ackCounter = 0
 
     def ackRequest(self, ackMsg):
         ack = ackMsg.split(",")
-        ackStr = ack[2] + "," + ack[3] + "," + ack[4]
+        ackStr = ack[2] + "," + ack[3] + "," + ack[4] + "," + ack[5]
         if ackStr == self.get_request_data():
             self.ackCounter = self.ackCounter + 1
             return True

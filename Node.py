@@ -79,12 +79,12 @@ class Node:
 
             time.sleep(random_t / 1000)
             self.ci.sendToAll(
-                str(constants.REQ_WORD) + ',' + str(self.nodeID) + ',' + str(self.logicalClock.clock) + ',' + str(self.req_no))
+                str(constants.REQ_WORD) + ',' + str(self.nodeID) + ',' + str(self.logicalClock.clock) + ',' + str(self.req_no) + ',' + str(datetime.datetime.now().strftime("%H:%M:%S:%f")))
             lock.acquire()
             self.logicalClock.increaseClock()
             self.req_no += 1
             lock.release()
-            if self.req_no > 5:
+            if self.req_no > constants.NR:
                 break
 
     def order_manager_thread(self):
@@ -124,7 +124,7 @@ class Node:
 
     def get_req_obj(self, reqString) -> Req.Req:
         data = reqString.split(",")
-        reqObj = Req.Req(data[1], int(data[2]), int(data[3]), reqString)
+        reqObj = Req.Req(data[1], int(data[2]), int(data[3]), reqString, data[4])
         return reqObj
 
     def writer_thread(self):
@@ -132,7 +132,7 @@ class Node:
             lock.acquire()
             if len(self.deliveredMSGs) > 0:
                 delMSG:Req.Req = self.deliveredMSGs.pop(0) 
-                self.writeToFile(delMSG.time,delMSG.reqNo, delMSG.sender)
+                self.writeToFile(delMSG.time,delMSG.reqNo, delMSG.sender, delMSG.realTime)
             lock.release()
 
     def run(self):
@@ -159,13 +159,12 @@ class Node:
         writer_thread.join()
         print("Node " + self.nodeID + ": Writer thread exited")
 
-    def writeToFile(self,time,reqNo,sender):
-
+    def writeToFile(self,time,reqNo,sender,realtime):
         pid = str(self.nodeID)
         ospid = str(os.getpid())  # If write to file is run on a thread this line might cause some problems
         reqid = reqNo  # To be figured out later TODO
         ts = (str(time)+ ":" + str(sender))
-        rt = datetime.datetime.now().timestamp()
+        rt = realtime
 
         writeToWrite = "pid=" + str(pid) + ", ospid=" + str(ospid) + ", reqid=" + str(reqid) + ", ts=" + str(ts) + ", rt=" + str(rt) + "\n"
 
