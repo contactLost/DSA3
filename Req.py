@@ -23,3 +23,6 @@ class Req:
 
     def get_request_data(self):
         return self.reqString[4:]
+
+    def __str__(self):
+        return "Sender: " + self.sender + ", Time: " + str(self.time) + ", ReqNo: " + str(self.reqNo) + ", ReqStr: " + self.reqString + ", AckCounter: " + str(self.ackCounter)
