@@ -2,7 +2,10 @@ import os
 import channel
 import random
 import time
+import constants
 import threading
+import Req
+import LogicalClock
 
 
 from datetime import datetime
@@ -13,7 +16,11 @@ class Node:
         self.ci=channel.Channel()
         successfulInit = False
         self.nodeID = ""
+        self.logicalClock = LogicalClock.LogicalClock()
         self.inboundMessages = []
+        self.inboundACKs = []
+        self.orderedQueue = []
+        self.deliveredMSGs = []
         self.allMessagesProcessed = False
 
         while not successfulInit:
@@ -32,8 +39,14 @@ class Node:
             message = self.ci.recvFromAny(3)
 
             #When a request received
-            self.inboundMessages.append(message)
-            print(message)
+            if (not message == None) and message[0:4] == constants.REQ_WORD:
+                reqObj = self.get_req_obj(message[1])
+                self.inboundMessages.append(reqObj)
+                print(message)
+            
+            #When a ack received
+            elif (not message == None) and message[0:4] == constants.ACK_WORD:
+                None
 
             lock.release()
 
@@ -43,12 +56,46 @@ class Node:
 
     def order_manager_thread(self):
         while not self.checkFinished():
-            None
+            lock.acquire()
+            #Empty Inbound messages
+            while not self.inboundMessages.count == 0:
+                request = self.inboundMessages.pop()
+                for i in range(len(self.orderedQueue)):
+                    req_i = self.orderedQueue[i]
+                    if req_i.time > request.time:
+                        self.orderedQueue.insert(i, request)
+                        #Send Ack
+                        break
+                    elif req_i.time == request.time:
+                        if int(req_i.sender) > int(request.sender):
+                            self.orderedQueue.insert(i, request)
+                            #Send Ack
+                            break
+                        
+                        if (i + 1 == (self.orderedQueue.count)) or (not self.orderedQueue[i+1].time == request.time):
+                            self.orderedQueue.insert(i, request)
+                            #Send Ack
+                            break
+                    
+            #Empty Acks
+
+
+            #Check If Delivarable
+
+
+            lock.release()
+
 
     def writer_thread(self):
         while not self.checkFinished():
             None
 
+    def get_req_obj(self, reqString):
+        data = reqString.split(",")
+        reqObj = Req.Req(data[1], int(data[2]), int(data[3]), reqString)
+        return reqObj
+
+    
 
 
 

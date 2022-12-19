@@ -5,3 +5,5 @@ MINT = 0
 MAXT = 60000 #miliseconds
 AVGT = 10000 #miliseconds
 NR = 5 #Number of requests
+REQ_WORD = "REQ"
+ACK_WORD = "ACK"
