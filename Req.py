@@ -10,9 +10,10 @@ class Req:
 
     def ackRequest(self, ackMsg):
         ack = ackMsg.split(",")
-        ackStr = ack[3] + "," + ack[4] + "," + ack[5]
+        ackStr = ack[2] + "," + ack[3] + "," + ack[4]
         if ackStr == self.get_request_data():
             self.ackCounter = self.ackCounter + 1
+            print("TRUE")
             return True
         return False
 
