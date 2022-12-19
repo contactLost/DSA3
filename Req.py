@@ -13,7 +13,6 @@ class Req:
         ackStr = ack[2] + "," + ack[3] + "," + ack[4]
         if ackStr == self.get_request_data():
             self.ackCounter = self.ackCounter + 1
-            print("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCurrent req: " + self.__str__() + " ACK: " + ackStr)
             return True
         return False
 
