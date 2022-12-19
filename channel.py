@@ -108,8 +108,10 @@ class Channel():
 		caller = self.osmembers[os.getpid()]
 		assert self.channel.sismember('members', str(caller)), ''
 		for i in self.channel.smembers('members'):
-			if i.decode("ascii") != str(caller):
-				self.channel.rpush(str([str(caller),str(i.decode("ascii"))]), str(message) )
+
+			#If you dont want to send message to itself, uncomment the line below
+			#if i.decode("ascii") != str(caller):
+			self.channel.rpush(str([str(caller),str(i.decode("ascii"))]), str(message) )
 
 	# Irrevelant part from project 2
 	# def changeTokenHolder(self, newHolderId):

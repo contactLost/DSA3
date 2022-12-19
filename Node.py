@@ -24,7 +24,6 @@ class Node:
         
 
     def listenRequests(self):
-
             lock.acquire()
             #Listen to requests
             message = None
@@ -49,6 +48,7 @@ class Node:
 
 
         listen_thread.join()
+        print(self.inboundMessages)
         #print("Node " + self.nodeID + ": Thread listen_thread exited")
         #print("Node " + self.nodeID + ": EXITED")
         
