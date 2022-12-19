@@ -98,6 +98,8 @@ class Node:
                 request = self.inboundREQs.pop(0)
 
                 # Put it into queue
+                self.received = self.received + 1
+                print(self.received)
                 self.orderedQueue.append(request)
                 self.orderedQueue.sort(key=lambda x: (x.time, x.sender))
 
