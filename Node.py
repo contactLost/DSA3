@@ -102,33 +102,56 @@ class Node:
                 print("Node " + str(self.nodeID) + " inbound req size: " + str(len(self.inboundREQs)))
 
             while not len(self.inboundREQs) == 0:
+                #incoming request
                 request = self.inboundREQs.pop(0)
-                if len(self.orderedQueue) == 0:
-                    self.orderedQueue.append(request)
-                    # Send Ack
-                    self.sendACKs(request)
-                
-                else:
-                    for i in range(len(self.orderedQueue)):
-                        req_i = self.orderedQueue[i]
-                        if req_i.time > request.time:
-                            self.orderedQueue.insert(i, request)
-                            # Send Ack
-                            self.sendACKs(request)
-                            break
-                        elif req_i.time == request.time:
-                            if int(req_i.sender) > int(request.sender):
-                                self.orderedQueue.insert(i, request)
-                                # Send Ack
-                                self.sendACKs(request)
-                                break
+                print("Node " + str(self.nodeID) + " inbound req processing: " + str(request))
 
-                            #Last Request
-                            elif (i + 1 == (len(self.orderedQueue))) or (not self.orderedQueue[i + 1].time == request.time):
-                                self.orderedQueue.insert(i + 1, request)
-                                # Send Ack
-                                self.sendACKs(request)
-                                break
+                # Put it into queue
+                self.orderedQueue.append(request)
+                self.orderedQueue.sort(key=lambda x: (x.time, x.sender))
+
+                # Send ACK
+                self.sendACKs(request)
+
+            # while not len(self.inboundREQs) == 0:
+            #     request = self.inboundREQs.pop(0)
+            #     if len(self.orderedQueue) == 0:
+            #         self.received = self.received + 1
+            #         print(self.received)
+            #         self.orderedQueue.append(request)
+            #         # Send Ack
+            #         self.sendACKs(request)
+                
+            #     else:
+            #         for i in range(len(self.orderedQueue)):
+            #             req_i = self.orderedQueue[i]
+            #             if req_i.time > request.time:
+            #                 self.received = self.received + 1
+            #                 print(self.received)
+            #                 self.orderedQueue.insert(i, request)
+            #                 # Send Ack
+            #                 self.sendACKs(request)
+            #                 break
+            #             elif req_i.time == request.time:
+            #                 if int(req_i.sender) > int(request.sender):
+            #                     self.received = self.received + 1
+            #                     print(self.received)
+            #                     self.orderedQueue.insert(i, request)
+            #                     # Send Ack
+            #                     self.sendACKs(request)
+            #                     break
+
+            #                 #Last Request
+            #                 elif (i + 1 == (len(self.orderedQueue))) or (not self.orderedQueue[i + 1].time == request.time):
+            #                     self.received = self.received + 1
+            #                     print(self.received)
+            #                     self.orderedQueue.insert(i + 1, request)
+            #                     # Send Ack
+            #                     self.sendACKs(request)
+            #                     break
+
+            #             elif req_i.time < request.time:
+            #                 if 
 
             #Empty Acks
             ind = 0
