@@ -24,7 +24,7 @@ class Node:
         self.deliveredMSGs = []
         self.allMessagesProcessed = False
         self.deliveredMSGAmount = 0
-        self.req_count = 0
+        self.req_count = 1
 
         while not successfulInit:
             try:
@@ -82,7 +82,13 @@ class Node:
 
             print('random_t ' + str(random_t))
             time.sleep(random_t / 1000)
-            self.ci.sendToAll('Broaddd cast brom')
+            current_time = datetime.datetime.now().timestamp()
+            self.ci.sendToAll(
+                str(constants.REQ_WORD) + ',' + str(self.nodeID) + ',' + str(current_time) + ',' + str(self.req_no))
+            self.req_no += self.req_no
+
+            if self.req_no >= constants.NR:
+                break
 
     def order_manager_thread(self):
         while not self.checkFinished():
