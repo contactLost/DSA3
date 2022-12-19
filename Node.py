@@ -43,7 +43,9 @@ class Node:
             # Listen to requests
             message = None
             message = self.ci.recvFromAny(3)
-
+            
+            if not message == None:
+                print("Node " + str(self.nodeID) + ": received message: " + str(message))
             #When a request received
             if (not message == None) and message[0:3] == constants.REQ_WORD:
                 reqObj = self.get_req_obj(message[1])
@@ -53,9 +55,11 @@ class Node:
             
             #When a ack received
             elif (not message == None) and message[0:3] == constants.ACK_WORD:
+                print("Node " + str(self.nodeID) + ": received ack: " + str(message))
                 ack = message[1]
-                self.logicalClock.updateClock(self.get_ack_time(ack))
-                self.inboundACKs.append(ack)
+                if not ack.split(",")[2] == self.nodeID:
+                    self.logicalClock.updateClock(self.get_ack_time(ack))
+                    self.inboundACKs.append(ack)
             lock.release()
 
     def sendACKs(self, request):
