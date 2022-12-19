@@ -159,9 +159,6 @@ class Node:
         writer_thread = threading.Thread(target=self.writer_thread)
         writer_thread.start()
 
-        self.writeToFile()
-        self.ci.sendToAll("Hello From " + self.nodeID)
-
         listen_thread.join()
         print("Node " + self.nodeID + ": Listen thread exited")
         broadcast_thread.join()
